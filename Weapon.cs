@@ -9,6 +9,8 @@ public class Weapon : Equipment
 
     protected Collider MyCollider;
 
+    protected int targetLayer = 0;
+
     public void SetAttackEnable(bool setBool)
     {
         MyCollider.enabled = setBool;
@@ -17,6 +19,11 @@ public class Weapon : Equipment
     public virtual void OnAttack(Vector3 OwnerPosition, Vector3 Direction)
     {
 
+    }
+
+    public void SetTargetLayer(int layer)
+    {
+        targetLayer = layer;
     }
 
     void Start()

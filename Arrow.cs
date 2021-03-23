@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class Arrow : MonoBehaviour
 {
-    private float Damage = 0.0f;
+    private float ArrowDamage = 0.0f;
     private float LifeTime = 10.0f;
-    private float speed = 2.0f;
+    private float speed = 5.0f;
 
     private int targetLayer = 0;
     private Vector3 direction;
@@ -17,6 +17,7 @@ public class Arrow : MonoBehaviour
         transform.forward = Direction;
         direction = Direction;
         targetLayer = Layer;
+        ArrowDamage = Damage;
     }
 
     void Flying()
@@ -39,7 +40,7 @@ public class Arrow : MonoBehaviour
 
     void ResetStatus()
     {
-        Damage = 0.0f;
+        ArrowDamage = 0.0f;
         transform.position = Vector3.zero;
         transform.forward = Vector3.forward;
         direction = Vector3.zero;
@@ -68,7 +69,7 @@ public class Arrow : MonoBehaviour
             Vector3 hitPoint = other.ClosestPoint(transform.position);
             Vector3 hitNormal = transform.position - other.transform.position;
 
-            CollisionTarget.OnDamage(hitPoint, hitNormal, Damage);
+            CollisionTarget.OnDamage(hitPoint, hitNormal, ArrowDamage);
 
             OnDead();
         }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MeleeWeapon : Weapon
 {
-    // Start is called before the first frame update
+
     void Start()
     {
         base.MyCollider = GetComponent<Collider>();
@@ -18,6 +18,9 @@ public class MeleeWeapon : Weapon
 
     private void OnTriggerEnter(Collider other)
     {
+        if (other.gameObject.layer != targetLayer)
+            return;
+
         MyCollider.enabled = false;
 
         Creature CollisionTarget = other.GetComponent<Creature>();

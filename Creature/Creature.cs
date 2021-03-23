@@ -47,63 +47,67 @@ public class CreatureInven
 
 public class Creature : MonoBehaviour
 {
-    enum State { Idle, Walk, Chase, Hit, Attack, Dead };
-    enum UnitType { Warrior, Magician, Arhcer, Priest };
+    protected enum State { Idle, Walk, Chase, Hit, Attack, Dead };
+    protected enum UnitType { Warrior, Magician, Arhcer, Priest };
 
     // event
     public event Action onDeath;
 
-    private CreatureInven MyInventory;
+    // Item
+    protected CreatureInven MyInventory;
+    public Weapon MyWeapon;
 
     // enum
-    private State CurrentState { get; set; } = State.Idle;
-    private UnitType CurrentUnitType { get; set; } = UnitType.Warrior;
+    protected State CurrentState { get; set; } = State.Idle;
+    protected UnitType CurrentUnitType { get; set; } = UnitType.Warrior;
 
 
-    public int tmpClassNum = 0;
     // status
-    private float Level { get; set; } = 0.0f;
-    private float HitPoint { get; set; } = 1000.0f;
-    private float AttackDamage { get; set; } = 0.0f;
-    private float Armor { get; set; } = 0.0f;
-    public float AttackRange = 2.5f;
-    public float AttackDelay = 2.5f;
-    public float AttackSpeed = 1.0f;
-    public float MoveSpeed = 2.0f;
-    private float HitDelay { get; set; } = 0.0f;
-    private int AttackCount { get; set; } = 0;
-    private int AttackCountMax { get; set; } = 1;
-    private int AttackComboCount { get; set; } = 0;
-    private float AttackTime { get; set; } = 0;
+    protected int Level = 0;
+    public float HitPoint { get; set; } = 1000.0f;
+    protected float Mana = 100.0f;
+    protected float AttackDamage = 100.0f;
+    protected float Armor = 0.0f;
+    protected float AttackRange = 1.75f;
+    protected float AttackDelay = 0.75f;
+    protected float AttackSpeed = 1.0f;
+    protected float MoveSpeed = 2.0f;
+
+    // specific status
+    protected float HitDelay = 0.0f;
+    protected int AttackCount = 0;
+    protected int AttackCountMax = 1;
+    protected int AttackComboCount = 0;
+    protected float AttackTime = 0;
 
     // bool
     public bool Dead { get; set; } = false;
-    private bool canAttack { get; set; } = true;
-    private bool isHit { get; set; } = false;
+    protected bool canAttack { get; set; } = true;
+    protected bool isHit { get; set; } = false;
 
     //
     public ParticleSystem bloodEffect;
     public ParticleSystem hitEffect;
 
     // component
-    private NavMeshAgent pathFinder; // 경로계산 AI 에이전트
-    private Animator animator;
+    protected NavMeshAgent pathFinder; // 경로계산 AI 에이전트
+    protected Animator animator;
+    protected Rigidbody rigidbody;
 
     // target
     public LayerMask mask;
-    private Creature target = null;
-    private bool hasTarget = false;
-    private float ChaseDelayTime = 0.0f;
-    private float DetectRange = 100.0f;
+    protected Creature target = null;
+    protected bool hasTarget = false;
+    protected float DetectRange = 100.0f;
 
-    public Weapon MyWeapon;
 
-    public void Shooting()
+    protected void TargetLookAt()
     {
-
+        Vector3 tmpDir = target.transform.position - transform.position;
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(tmpDir), Time.deltaTime * 3.0f);
     }
 
-    public float CheckDistance(Vector3 position, Vector3 TargetPosition)
+    protected float CheckDistance(Vector3 position, Vector3 TargetPosition)
     {
         return Vector3.Distance(position, TargetPosition);
     }
@@ -115,31 +119,31 @@ public class Creature : MonoBehaviour
             onDeath();
         }
 
+        hasTarget = false;
+        CurrentState = State.Dead;
+        animator.SetTrigger("Dead");
         Dead = true;
+
+        Collider[] MyColliders = GetComponents<Collider>();
+        for (int i = 0; i < MyColliders.Length; i++)
+        {
+            MyColliders[i].enabled = false;
+        }
+
+        rigidbody.useGravity = false;
+        rigidbody.velocity = Vector3.zero;
+        rigidbody.angularVelocity = Vector3.zero;
+        rigidbody.isKinematic = true;
+
+        pathFinder.updatePosition = false;
+        pathFinder.updateRotation = false;
+        pathFinder.velocity = Vector3.zero;
+        pathFinder.isStopped = true;
+        pathFinder.enabled = false;
     }
 
     public virtual void OnDamage(Vector3 hitPoint, Vector3 hitNormal, float damage)
     {
-        HitPoint -= damage;
-
-        if (0 >= HitPoint && !Dead)
-        {
-            Dead = true;
-            animator.SetTrigger("Dead");
-            CurrentState = State.Dead;
-            OnDie();
-        }
-
-        else
-        {
-            if (!isHit)
-            {
-                isHit = true;
-                //CurrentState = State.Hit;
-                //animator.SetTrigger("Hit");
-            }
-        }
-
         bloodEffect.transform.position = hitPoint;
         bloodEffect.transform.rotation = Quaternion.LookRotation(hitNormal);
         bloodEffect.Play();
@@ -147,31 +151,18 @@ public class Creature : MonoBehaviour
         hitEffect.transform.position = hitPoint;
         hitEffect.transform.rotation = Quaternion.LookRotation(hitNormal);
         hitEffect.Play();
+
+        HitPoint -= damage;
+
+        if (0 >= HitPoint && !Dead)
+        {
+            OnDie();
+        }
     }
 
-    public void OnHit()
+    protected void AttackTimer()
     {
-
-    }
-
-    public void OnWalk()
-    {
-
-    }
-
-    public void OnFootR()
-    {
-
-    }
-
-    public void OnFootL()
-    {
-
-    }
-
-    private void AttackTimer()
-    {
-        if (CurrentState == State.Attack)
+        if (Dead || CurrentState == State.Attack)
             return;
 
         if(!canAttack && !animator.GetBool("isAttack"))
@@ -191,63 +182,60 @@ public class Creature : MonoBehaviour
 
     protected virtual IEnumerator OnAttack()
     {
-        if (canAttack)
+        if (null == target || target.Dead)
         {
-            //transform.LookAt(target.transform);
-
-            canAttack = false;
-            animator.SetInteger("AttackNum", UnityEngine.Random.Range(0, 2));
-            animator.SetBool("isAttack", true);
-
-            if (tmpClassNum == 1)
-            {
-                Arrow Projectile = ObjectManager.GetObject();
-                Vector3 direction = target.transform.position - transform.position;
-                Projectile.Initialize(transform.position + new Vector3(0.0f, 1.5f, 0.0f), direction, target.gameObject.layer , 100.0f);
-            }
+            CurrentState = State.Idle;
+            hasTarget = false;
         }
 
-        else
-        {
-            if (animator.GetBool("isAttack"))
-            {
-                animator.speed = AttackSpeed;
-
-                yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
-
-                animator.speed = 1.0f;
-                CurrentState = State.Idle;
-                animator.SetBool("isAttack", false);
-            }
-        }
+        yield return null;
     }
 
     protected void OnChase()
     {
         if (hasTarget)
         {
-            transform.LookAt(target.transform);
-
-            if (AttackRange < CheckDistance(transform.position, target.transform.position))
+            if(null == target || target.Dead)
             {
-                pathFinder.isStopped = false;
-                pathFinder.SetDestination(target.transform.position);
-                animator.SetBool("isWalk", true);
+                animator.SetBool("isWalk", false);
+                animator.SetBool("isAttack", false);
+                CurrentState = State.Idle;
+                target = null;
+                hasTarget = false;
             }
 
             else
             {
-                pathFinder.isStopped = true;
-                animator.SetBool("isWalk", false);
+                TargetLookAt();
 
-                if (canAttack)
+                if (AttackRange < pathFinder.remainingDistance)
                 {
-                    CurrentState = State.Attack;
+                    ReFindTarget();
+
+                    pathFinder.updatePosition = true;
+                    pathFinder.updateRotation = true;
+                    pathFinder.isStopped = false;
+                    pathFinder.SetDestination(target.transform.position);
+                    animator.SetBool("isWalk", true);
                 }
 
                 else
                 {
-                    CurrentState = State.Idle;
+                    pathFinder.updatePosition = false;
+                    pathFinder.updateRotation = false;
+                    pathFinder.isStopped = true;
+                    pathFinder.velocity = Vector3.zero;
+                    animator.SetBool("isWalk", false);
+
+                    if (canAttack)
+                    {
+                        CurrentState = State.Attack;
+                    }
+
+                    else
+                    {
+                        CurrentState = State.Idle;
+                    }
                 }
             }
         }
@@ -255,35 +243,85 @@ public class Creature : MonoBehaviour
         else
         {
             CurrentState = State.Idle;
+            hasTarget = false;
         }
     }
 
-    protected void FindTarget(LayerMask targetMask)
+    protected void ReFindTarget()
+    {
+        Collider[] colliders =
+                    Physics.OverlapSphere(transform.position, DetectRange, mask);
+
+        float distance = 9999.0f;
+        Creature tmpTargetSave = null;
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Creature tmpTarget = colliders[i].GetComponent<Creature>();
+
+            if (null != tmpTarget && !tmpTarget.Dead)
+            {
+                float tmpDistance = CheckDistance(transform.position, tmpTarget.transform.position);
+                if (distance > tmpDistance)
+                {
+                    tmpTargetSave = tmpTarget;
+                    distance = tmpDistance;
+                }
+            }
+
+            else
+            {
+                continue;
+            }
+        }
+
+        if(null == tmpTargetSave)
+        {
+            target = null;
+            hasTarget = false;
+            rigidbody.angularVelocity = Vector3.zero;
+        }
+
+        else if (null != tmpTargetSave && !tmpTargetSave.Dead)
+        {
+            target = tmpTargetSave;
+            hasTarget = true;
+            CurrentState = State.Chase;
+            pathFinder.SetDestination(target.transform.position);
+
+            if (MyWeapon != null)
+                MyWeapon.SetTargetLayer(target.gameObject.layer);
+        }
+    }
+
+    protected void FindTarget()
     {
         if(!hasTarget)
         {
-            Collider[] colliders =
-                    Physics.OverlapSphere(transform.position, DetectRange, targetMask);
-
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                Creature tmpTarget = colliders[i].GetComponent<Creature>();
-
-                if (null != tmpTarget && !tmpTarget.Dead)
-                {
-                    target = tmpTarget;
-                    hasTarget = true;
-                    CurrentState = State.Chase;
-                }
-            }
+            ReFindTarget();
         }
 
         else
         {
-            CurrentState = true == target.Dead ? State.Idle : State.Chase;
-
-            if(target.Dead)
+            if (target != null)
             {
+                CurrentState = true == target.Dead ? State.Idle : State.Chase;
+
+                if (target.Dead)
+                {
+                    animator.SetBool("isWalk", false);
+                    animator.SetBool("isAttack", false);
+                    CurrentState = State.Idle;
+                    target = null;
+                    hasTarget = false;
+                }
+            }
+
+            else
+            {
+                animator.SetBool("isWalk", false);
+                animator.SetBool("isAttack", false);
+                CurrentState = State.Idle;
+                target = null;
                 hasTarget = false;
             }
         }
@@ -291,11 +329,14 @@ public class Creature : MonoBehaviour
 
     public void CheckState()
     {
-        switch(CurrentState)
+        if (Dead)
+            return;
+
+        switch (CurrentState)
         {
             case State.Idle:
                 {
-                    FindTarget(mask);
+                    FindTarget();
                     break;
                 }
             case State.Chase:
@@ -311,19 +352,38 @@ public class Creature : MonoBehaviour
         }
     }
 
+    protected void SetUpStatus(UnitData uData)
+    {
+        CurrentUnitType = (UnitType)uData.UnitType;
+        Level = uData.Level;
+        HitPoint = uData.HitPoint;
+        Mana = uData.Mana;
+        AttackDamage = uData.AttackDamage;
+        Armor = uData.Armor;
+        AttackRange = uData.AttackRange;
+        AttackDelay = uData.AttackDelay;
+        AttackSpeed = uData.AttackSpeed;
+        pathFinder.speed = MoveSpeed = uData.MoveSpeed;
+    }
+
     protected virtual void Initialize()
     {
         pathFinder = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        rigidbody = GetComponent<Rigidbody>();
 
         CurrentState = State.Idle;
+        CurrentUnitType = UnitType.Warrior;
 
         MyInventory = new CreatureInven();
 
         canAttack = true;
 
-        ChaseDelayTime = 0.25f;
         pathFinder.speed = MoveSpeed;
+    }
+
+    protected void CheckTarget()
+    {
     }
 
     void Start()
@@ -333,7 +393,6 @@ public class Creature : MonoBehaviour
 
     void Update()
     {
-        CheckState();
-        AttackTimer();
+
     }
 }
