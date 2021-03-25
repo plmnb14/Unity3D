@@ -21,6 +21,52 @@ public class UIManager : MonoBehaviour
 
     public Inventory_Item ItemInventory = null;
     public Inventory_Hero HeroInventory = null;
+    public Inventory_Team TeamInventory = null;
+
+    private Stack<PopUpUI> UIStack = new Stack<PopUpUI>();
+    private Stack<PopUpUI> PreUIStack = new Stack<PopUpUI>();
+
+    public Inventory_Hero GetHeroInventory()
+    {
+        return HeroInventory;
+    }
+
+    public void CheckPreStack()
+    {
+        if(PreUIStack.Count > 0)
+        {
+            UIStack.Push(PreUIStack.Pop());
+            UIStack.Peek().PopUPActive(true);
+        }
+    }
+
+    public void PushOnUIStack(PopUpUI UI)
+    {
+        UI.PopUPActive(true);
+        UIStack.Push(UI);
+    }
+
+    public void PopOnUIStack()
+    {
+        if (UIStack.Count > 0)
+        {
+            UIStack.Pop().PopUPActive(false);
+
+            if(UIStack.Count == 1 && PreUIStack.Count == 0)
+            {
+                UIStack.Pop().PopUPActive(false);
+            }
+        }
+    }
+
+    public void ActivePreOnUIStack(bool boolen)
+    {
+        if (UIStack.Count > 0)
+        {
+            PreUIStack.Push(UIStack.Pop());
+            PreUIStack.Peek().PopUPActive(false);
+        }
+    }
 
     public void ActiveInventory(bool boolen)
     {
@@ -29,7 +75,17 @@ public class UIManager : MonoBehaviour
 
     public void ActiveHeroInventory(bool boolen)
     {
-        HeroInventory.gameObject.SetActive(boolen);
+        HeroInventory.OnActiveFirst(boolen);
+    }
+
+    public void ActiveMiniPortraitInventory(bool boolen)
+    {
+        HeroInventory.OnActiveMini(boolen);
+    }
+
+    public void ActiveTeamInventory(bool boolen)
+    {
+        TeamInventory.OnActive(boolen);
     }
 
     private void Awake()
@@ -39,8 +95,6 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
-        HeroInventory.gameObject.SetActive(false);
-        ItemInventory.gameObject.SetActive(false);
     }
 
     void Update()

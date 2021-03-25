@@ -4,12 +4,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class HeroPortrait : Portrait, IPointerClickHandler
+public class TeamPortrait : Portrait, IPointerClickHandler
 {
-
     public void OnPointerClick(PointerEventData eventData)
     {
-        UIManager.instance.ActiveMiniPortraitInventory(true);
     }
 
     protected override void ChangePortrait()
@@ -19,16 +17,11 @@ public class HeroPortrait : Portrait, IPointerClickHandler
 
     private void Awake()
     {
-        GetImageComponent();
+        HeroImage = GetComponent<Image>();
     }
 
     void Start()
     {
         ChangePortrait();
-    }
-
-    void Update()
-    {
-        
     }
 }

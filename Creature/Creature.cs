@@ -62,6 +62,9 @@ public class Creature : MonoBehaviour
     protected UnitType CurrentUnitType { get; set; } = UnitType.Warrior;
 
 
+    // status new
+    protected CreatureData MyStatus = null;
+
     // status
     protected int Level = 0;
     public float HitPoint { get; set; } = 1000.0f;
@@ -100,6 +103,10 @@ public class Creature : MonoBehaviour
     protected bool hasTarget = false;
     protected float DetectRange = 100.0f;
 
+    public void SetStatus(CreatureData LoadedData)
+    {
+        MyStatus = LoadedData;
+    }
 
     protected void TargetLookAt()
     {

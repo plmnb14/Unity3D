@@ -61,14 +61,12 @@ public class Inventory_Item : MonoBehaviour
         LoadUIPrefabs();
         SetupInventory();
         SetupSlot();
+
+        gameObject.SetActive(false);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.T))
-        {
-            MainInventorySlot[Equipment_SlotIndex][0].ChangeSlot();
-        }
+
     }
 }
