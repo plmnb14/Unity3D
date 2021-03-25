@@ -8,15 +8,15 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            if (m_instnace == null)
+            if (m_instance == null)
             {
-                m_instnace = FindObjectOfType<GameManager>();
+                m_instance = FindObjectOfType<GameManager>();
             }
 
-            return m_instnace;
+            return m_instance;
         }
     }
-    private static GameManager m_instnace;
+    private static GameManager m_instance;
 
     private Dictionary<string, UnitData> UnitDataDic = new Dictionary<string, UnitData>();
 
@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        DontDestroyOnLoad(gameObject);
     }
 
     void Start()
