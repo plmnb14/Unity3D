@@ -45,8 +45,10 @@ public class CreatureInven
     }
 }
 
+public delegate void HealthChange(float value);
 public class Creature : MonoBehaviour
 {
+    public event HealthChange healthChange;
     protected enum State { Idle, Walk, Chase, Hit, Attack, Dead };
     protected enum UnitType { Warrior, Magician, Arhcer, Priest };
 
@@ -63,18 +65,7 @@ public class Creature : MonoBehaviour
 
 
     // status new
-    protected CreatureData MyStatus = null;
-
-    // status
-    protected int Level = 0;
-    public float HitPoint { get; set; } = 1000.0f;
-    protected float Mana = 100.0f;
-    protected float AttackDamage = 100.0f;
-    protected float Armor = 0.0f;
-    protected float AttackRange = 1.75f;
-    protected float AttackDelay = 0.75f;
-    protected float AttackSpeed = 1.0f;
-    protected float MoveSpeed = 2.0f;
+    public CreatureData MyStatus { get; set; }
 
     // specific status
     protected float HitDelay = 0.0f;
@@ -88,9 +79,11 @@ public class Creature : MonoBehaviour
     protected bool canAttack { get; set; } = true;
     protected bool isHit { get; set; } = false;
 
+
+    private WorldHPSlider HpUI;
     //
-    public ParticleSystem bloodEffect;
-    public ParticleSystem hitEffect;
+    private ParticleSystem bloodEffect;
+    private ParticleSystem hitEffect;
 
     // component
     protected NavMeshAgent pathFinder; // 경로계산 AI 에이전트
@@ -98,14 +91,20 @@ public class Creature : MonoBehaviour
     protected Rigidbody rigidbody;
 
     // target
-    public LayerMask mask;
+    public LayerMask TargetlayerMask { get; set; }
     protected Creature target = null;
     protected bool hasTarget = false;
     protected float DetectRange = 100.0f;
 
-    public void SetStatus(CreatureData LoadedData)
+    public void UpdateHP()
     {
-        MyStatus = LoadedData;
+        if(healthChange == null)
+        {
+            HpUI.SetUpHealth(MyStatus.HitPoint);
+            healthChange += HpUI.ChangeHealth;
+        }
+
+        healthChange(MyStatus.HitPoint);
     }
 
     protected void TargetLookAt()
@@ -159,9 +158,10 @@ public class Creature : MonoBehaviour
         hitEffect.transform.rotation = Quaternion.LookRotation(hitNormal);
         hitEffect.Play();
 
-        HitPoint -= damage;
+        MyStatus.HitPoint -= damage;
+        healthChange(MyStatus.HitPoint);
 
-        if (0 >= HitPoint && !Dead)
+        if (0 >= MyStatus.HitPoint && !Dead)
         {
             OnDie();
         }
@@ -176,13 +176,10 @@ public class Creature : MonoBehaviour
         {
             AttackTime += Time.deltaTime; 
 
-            if(AttackTime >= AttackDelay)
+            if(AttackTime >= MyStatus.AttackDelay)
             {
                 AttackTime = 0.0f;
                 canAttack = true;
-
-                if (MyWeapon != null)
-                    MyWeapon.SetAttackEnable(true);
             }
         }
     }
@@ -215,7 +212,7 @@ public class Creature : MonoBehaviour
             {
                 TargetLookAt();
 
-                if (AttackRange < pathFinder.remainingDistance)
+                if (MyStatus.AttackRange < pathFinder.remainingDistance)
                 {
                     ReFindTarget();
 
@@ -257,13 +254,15 @@ public class Creature : MonoBehaviour
     protected void ReFindTarget()
     {
         Collider[] colliders =
-                    Physics.OverlapSphere(transform.position, DetectRange, mask);
+                    Physics.OverlapSphere(transform.position, DetectRange, TargetlayerMask);
+
+        Debug.Log("size : " + colliders.Length);
 
         float distance = 9999.0f;
         Creature tmpTargetSave = null;
         for (int i = 0; i < colliders.Length; i++)
         {
-            Creature tmpTarget = colliders[i].GetComponent<Creature>();
+            Creature tmpTarget = colliders[i].gameObject.GetComponent<Creature>();
 
             if (null != tmpTarget && !tmpTarget.Dead)
             {
@@ -359,22 +358,16 @@ public class Creature : MonoBehaviour
         }
     }
 
-    protected void SetUpStatus(UnitData uData)
-    {
-        CurrentUnitType = (UnitType)uData.UnitType;
-        Level = uData.Level;
-        HitPoint = uData.HitPoint;
-        Mana = uData.Mana;
-        AttackDamage = uData.AttackDamage;
-        Armor = uData.Armor;
-        AttackRange = uData.AttackRange;
-        AttackDelay = uData.AttackDelay;
-        AttackSpeed = uData.AttackSpeed;
-        pathFinder.speed = MoveSpeed = uData.MoveSpeed;
-    }
-
     protected virtual void Initialize()
     {
+        HpUI = Instantiate(Resources.Load<WorldHPSlider>("_Prefabs/UI/Status Slider"), transform);
+        HpUI.SetupData();
+        HpUI.SetUpHealth(MyStatus.HitPoint);
+        UpdateHP();
+
+        bloodEffect = Instantiate(Resources.Load<ParticleSystem>("_Prefabs/Effect/Hit_Blood_Effect_01"), transform);
+        hitEffect = Instantiate(Resources.Load<ParticleSystem>("_Prefabs/Effect/Hit_Effect_01"), transform);
+
         pathFinder = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         rigidbody = GetComponent<Rigidbody>();
@@ -386,11 +379,9 @@ public class Creature : MonoBehaviour
 
         canAttack = true;
 
-        pathFinder.speed = MoveSpeed;
-    }
-
-    protected void CheckTarget()
-    {
+        rigidbody.velocity = Vector3.zero;
+        rigidbody.angularVelocity = Vector3.zero;
+        rigidbody.isKinematic = true;
     }
 
     void Start()

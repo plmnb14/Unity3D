@@ -22,7 +22,7 @@ public class ArcherType : Creature
         {
             Arrow newArrow = ObjectManager.GetObject();
             Vector3 Dir = target.transform.position - transform.position;
-            newArrow.Initialize(AimPoint.transform.position, Dir, target.gameObject.layer, AttackDamage);
+            newArrow.Initialize(AimPoint.transform.position, Dir, target.gameObject.layer, MyStatus.AttackDamage);
         }
     }
 
@@ -47,15 +47,14 @@ public class ArcherType : Creature
             animator.SetBool("isAttack", false);
         }
     }
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
 
     void Start()
     {
         base.Initialize();
-
-        AttackDelay = 0.1f;
-        AttackSpeed = 2.0f;
-        AttackDamage = 400.0f;
-        AttackRange = 8.0f;
     }
 
     void Update()

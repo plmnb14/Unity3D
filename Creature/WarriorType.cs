@@ -23,6 +23,7 @@ public class WarriorType : Creature
             canAttack = false;
             animator.SetInteger("AttackNum", UnityEngine.Random.Range(0, 3));
             animator.SetBool("isAttack", true);
+            //ActiveWeaponCollider(0);
         }
 
         else
@@ -31,18 +32,14 @@ public class WarriorType : Creature
 
             yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
 
-            EnableWeaponCollider(0);
             CurrentState = State.Idle;
             animator.SetBool("isAttack", false);
         }
     }
 
-    protected virtual void EnableWeaponCollider(int num)
+    protected virtual void ActiveWeaponCollider(int iValue)
     {
-        bool enable = num > 0 ? true : false;
-
-        Collider collider = MyWeapon.GetComponent<Collider>();
-        collider.enabled = enable;
+        MyWeapon.GetComponent<Collider>().enabled = iValue == 0 ? false : true;
     }
 
     void Start()
@@ -52,8 +49,6 @@ public class WarriorType : Creature
 
     void Update()
     {
-        Debug.Log("현재 상태 : " + CurrentState);
-
         CheckState();
         AttackTimer();
     }
