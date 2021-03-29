@@ -20,8 +20,6 @@ public class Inventory_Hero : Inventory
     public GameObject HeroPortraitInven;
     public GameObject HeroMiniPortraitInven;
 
-    private DataStruct DataManager;
-
     public override void OnActive(bool boolen)
     {
         if (!HeroScrollView.gameObject.activeInHierarchy)
@@ -58,10 +56,8 @@ public class Inventory_Hero : Inventory
 
     private void LoadHeroInvenData()
     {
-        DataManager = new DataStruct();
-
         List<CreatureData> tmpData;
-        DataManager.LoadCreatureData<CreatureData>(out tmpData, "Player_HeroData.json");
+        DataStruct.LoadData<CreatureData>(out tmpData, "Player_HeroData.json");
 
         CreateHerotoInven(ref tmpData);
         SetupInvenImage(ref tmpData);

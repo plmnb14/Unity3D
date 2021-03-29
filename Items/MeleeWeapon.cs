@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class MeleeWeapon : Weapon
 {
-
     void Start()
     {
         base.MyCollider = GetComponent<Collider>();
@@ -15,8 +14,6 @@ public class MeleeWeapon : Weapon
         if (other.gameObject.layer != targetLayer)
             return;
 
-        //MyCollider.enabled = false;
-
         Creature CollisionTarget = other.GetComponent<Creature>();
 
         if (null != CollisionTarget && !CollisionTarget.Dead)
@@ -24,7 +21,7 @@ public class MeleeWeapon : Weapon
             Vector3 hitPoint = other.ClosestPoint(transform.position);
             Vector3 hitNormal = transform.position - other.transform.position;
 
-            CollisionTarget.OnDamage(hitPoint, hitNormal, WeaponDamage);
+            CollisionTarget.OnDamage(hitPoint, hitNormal, 100.0f);
         }
     }
 }

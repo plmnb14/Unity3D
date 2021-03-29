@@ -48,8 +48,11 @@ public class CreatureInven
 public delegate void HealthChange(float value);
 public class Creature : MonoBehaviour
 {
+    protected SkillData[] skills = new SkillData[3];
+    protected bool[] skillCooldown = new bool[3];
+
     public event HealthChange healthChange;
-    protected enum State { Idle, Walk, Chase, Hit, Attack, Dead };
+    protected enum State { Idle, Walk, Chase, Hit, Attack, Skill, Dead };
     protected enum UnitType { Warrior, Magician, Arhcer, Priest };
 
     // event
@@ -64,6 +67,7 @@ public class Creature : MonoBehaviour
     protected UnitType CurrentUnitType { get; set; } = UnitType.Warrior;
 
 
+    public CreatureData OriginStatus { get; set; }
     // status new
     public CreatureData MyStatus { get; set; }
 
@@ -78,6 +82,7 @@ public class Creature : MonoBehaviour
     public bool Dead { get; set; } = false;
     protected bool canAttack { get; set; } = true;
     protected bool isHit { get; set; } = false;
+    protected bool isPlayingSkill = false;
 
 
     private WorldHPSlider HpUI;
@@ -105,6 +110,11 @@ public class Creature : MonoBehaviour
         }
 
         healthChange(MyStatus.HitPoint);
+    }
+
+    protected virtual void ActiveSkill(int index)
+    {
+        skills[index].ActiveSkill();
     }
 
     protected void TargetLookAt()
@@ -148,8 +158,16 @@ public class Creature : MonoBehaviour
         pathFinder.enabled = false;
     }
 
+    public virtual float CaculateFinalDamage(float damage)
+    {
+        float calcDamage = damage - (MyStatus.Armor * 0.5f);
+
+        return 0.0f < calcDamage ? calcDamage : 0.0f;
+    }
+
     public virtual void OnDamage(Vector3 hitPoint, Vector3 hitNormal, float damage)
     {
+
         bloodEffect.transform.position = hitPoint;
         bloodEffect.transform.rotation = Quaternion.LookRotation(hitNormal);
         bloodEffect.Play();
@@ -158,7 +176,7 @@ public class Creature : MonoBehaviour
         hitEffect.transform.rotation = Quaternion.LookRotation(hitNormal);
         hitEffect.Play();
 
-        MyStatus.HitPoint -= damage;
+        MyStatus.HitPoint -= CaculateFinalDamage(damage);
         healthChange(MyStatus.HitPoint);
 
         if (0 >= MyStatus.HitPoint && !Dead)
@@ -193,6 +211,34 @@ public class Creature : MonoBehaviour
         }
 
         yield return null;
+    }
+
+    protected virtual IEnumerator OnSkill()
+    {
+        for(int i = 1; i < 3; i++)
+        {
+            while (isPlayingSkill)
+                yield return null;
+
+            if (!skills[i].isCooldown)
+            {
+                skillCooldown[i] = true;
+                skills[i].Initialization(this, i);
+                isPlayingSkill = true;
+                break;
+            }
+        }
+    }
+
+    public virtual void EndSkill()
+    {
+        CurrentState = State.Idle;
+        isPlayingSkill = false;
+    }
+
+    public void CooldownEnd(int skillIndex)
+    {
+        skillCooldown[skillIndex] = false;
     }
 
     protected void OnChase()
@@ -231,7 +277,13 @@ public class Creature : MonoBehaviour
                     pathFinder.velocity = Vector3.zero;
                     animator.SetBool("isWalk", false);
 
-                    if (canAttack)
+                    if((skills[1] != null && !skillCooldown[1]) ||
+                        (skills[2] != null && !skillCooldown[2]))
+                    {
+                        CurrentState = State.Skill;
+                    }
+
+                    else if (canAttack)
                     {
                         CurrentState = State.Attack;
                     }
@@ -255,8 +307,6 @@ public class Creature : MonoBehaviour
     {
         Collider[] colliders =
                     Physics.OverlapSphere(transform.position, DetectRange, TargetlayerMask);
-
-        Debug.Log("size : " + colliders.Length);
 
         float distance = 9999.0f;
         Creature tmpTargetSave = null;
@@ -355,6 +405,11 @@ public class Creature : MonoBehaviour
                     StartCoroutine(OnAttack());
                     break;
                 }
+            case State.Skill:
+                {
+                    StartCoroutine(OnSkill());
+                    break;
+                }
         }
     }
 
@@ -382,15 +437,5 @@ public class Creature : MonoBehaviour
         rigidbody.velocity = Vector3.zero;
         rigidbody.angularVelocity = Vector3.zero;
         rigidbody.isKinematic = true;
-    }
-
-    void Start()
-    {
-        Initialize();
-    }
-
-    void Update()
-    {
-
     }
 }

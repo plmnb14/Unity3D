@@ -9,6 +9,11 @@ public class WarriorType : Creature
         base.OnDie();
     }
 
+    protected override void ActiveSkill(int index)
+    {
+        base.ActiveSkill(index);
+    }
+
     public override void OnDamage(Vector3 hitPoint, Vector3 hitNormal, float damage)
     {
         base.OnDamage(hitPoint, hitNormal, damage);
@@ -23,7 +28,6 @@ public class WarriorType : Creature
             canAttack = false;
             animator.SetInteger("AttackNum", UnityEngine.Random.Range(0, 3));
             animator.SetBool("isAttack", true);
-            //ActiveWeaponCollider(0);
         }
 
         else

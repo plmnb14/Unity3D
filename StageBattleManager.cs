@@ -53,10 +53,11 @@ public class StageBattleManager : MonoBehaviour
         for (int i = 0; i < 1; i++)
         {
             Creature LoadCreature =  Resources.Load<Creature>("_Prefabs/Creature/" + TeamList[TeamIndex[i]].Name + "_Prefab");
-
             Creature instance = Instantiate(LoadCreature);
 
-            instance.MyStatus = TeamList[TeamIndex[i]];
+            CreatureData tmpData = TeamList[TeamIndex[i]].DeepCopy();
+            instance.MyStatus = tmpData;
+            instance.OriginStatus = tmpData.DeepCopy();
             instance.transform.position = coordTileList[TeamSlotIndex[i]];
             instance.transform.rotation = Quaternion.Euler(new Vector3(0.0f, 90.0f, 0.0f));
             instance.gameObject.layer = LayerMask.NameToLayer("Player");
@@ -76,7 +77,9 @@ public class StageBattleManager : MonoBehaviour
 
             Creature instance = Instantiate(LoadCreature);
 
-            instance.MyStatus = TeamList[TeamIndex[i]];
+            CreatureData tmpData = TeamList[TeamIndex[i]].DeepCopy();
+            instance.MyStatus = tmpData;
+            instance.OriginStatus = tmpData.DeepCopy();
             instance.transform.position = coordTileList[TeamSlotIndex[i]] + new Vector3(5.0f, 0.0f, 0.0f);
             instance.transform.rotation = Quaternion.Euler(new Vector3(0.0f, -90.0f, 0.0f));
             instance.gameObject.layer = LayerMask.NameToLayer("Enemy");
