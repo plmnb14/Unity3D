@@ -31,7 +31,7 @@ public class Skill_SmashGround : SkillData
                 Vector3 hitPoint = colliders[i].ClosestPoint(transform.position);
                 Vector3 hitNormal = transform.position - colliders[i].transform.position;
 
-                tmpTarget.OnDamage(hitPoint, hitNormal, 300.0f);
+                tmpTarget.OnDamage(hitPoint, hitNormal, Owner.MyStatus.AttackDamage * skillData.percentage);
             }
         }
     }

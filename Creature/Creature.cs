@@ -437,5 +437,7 @@ public class Creature : MonoBehaviour
         rigidbody.velocity = Vector3.zero;
         rigidbody.angularVelocity = Vector3.zero;
         rigidbody.isKinematic = true;
+
+        MyWeapon.GetComponent<Collider>().enabled = false;
     }
 }

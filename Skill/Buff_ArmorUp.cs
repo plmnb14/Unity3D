@@ -23,10 +23,14 @@ public class Buff_ArmorUp : BuffSkill
         buffAura.transform.localPosition = Vector3.zero;
         buffAura.transform.localScale = Vector3.one * 1.5f;
         buffAura.Play();
+
+        Owner.onDeath += DeActivation;
     }
 
     protected override void DeActivation()
     {
+        Owner.onDeath -= DeActivation;
+
         Owner.MyStatus.Armor -= (Owner.OriginStatus.Armor * skillData.percentage);
 
         //this.gameObject.SetActive(false);
