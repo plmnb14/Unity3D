@@ -9,6 +9,11 @@ public class Buff_ArmorUp : BuffSkill
 
     public override void ActiveSkill()
     {
+        Owner.AddBuff(this);
+
+        icon.gameObject.SetActive(true);
+        iconBack.gameObject.SetActive(true);
+
         this.gameObject.SetActive(true);
         armorUp.gameObject.SetActive(true);
         buffAura.gameObject.SetActive(true);
@@ -25,6 +30,7 @@ public class Buff_ArmorUp : BuffSkill
         buffAura.Play();
 
         Owner.onDeath += DeActivation;
+        Execute();
     }
 
     protected override void DeActivation()
@@ -33,13 +39,18 @@ public class Buff_ArmorUp : BuffSkill
 
         Owner.MyStatus.Armor -= (Owner.OriginStatus.Armor * skillData.percentage);
 
-        //this.gameObject.SetActive(false);
         armorUp.gameObject.SetActive(false);
         buffAura.gameObject.SetActive(false);
+
+        icon.gameObject.SetActive(false);
+        iconBack.gameObject.SetActive(false);
+
+        Owner.RemoveBuff(this);
     }
 
     private void Awake()
     {
+        Loadchild();
         buffAura = Instantiate(Resources.Load<ParticleSystem>("Polygon Arsenal/Prefabs/Combat/Buff/BuffYellow"));
         armorUp = Instantiate(Resources.Load<ParticleSystem>("Polygon Arsenal/Prefabs/Combat/Shield/ShieldYellow"));
     }

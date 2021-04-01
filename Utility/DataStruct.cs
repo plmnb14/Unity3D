@@ -111,6 +111,7 @@ public class CreatureData
         copy.Armor = this.Armor;
         copy.AttackDamage = this.AttackDamage;
         copy.AttackRange = this.AttackRange;
+        copy.AttackDelay = this.AttackDelay;
         copy.AttackSpeed = this.AttackSpeed;
         copy.MoveSpeed = this.MoveSpeed;
 

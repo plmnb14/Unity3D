@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class ObjectManager : MonoBehaviour
 {
-    public int CreateCount = 10;
+    public enum ProjType { Arrow, MagicMissile, TypeEnd };
+    public int CreateCount = 20;
 
     public static ObjectManager instance
     {
@@ -20,8 +21,8 @@ public class ObjectManager : MonoBehaviour
     }
     private static ObjectManager m_instnace;
 
-    public Arrow ArrowPrefab;
-    private Queue<Arrow> ArrowQueue = new Queue<Arrow>();
+    private Projectile[] projPrefabs = new Projectile[(int)ProjType.TypeEnd];
+    private Queue<Projectile>[] projQueue = new Queue<Projectile>[(int)ProjType.TypeEnd];
 
     private void Awake()
     {
@@ -30,34 +31,40 @@ public class ObjectManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        else
+        for(int i = 0; i < (int)ProjType.TypeEnd; i++)
         {
-            CreateArrow(CreateCount);
+            projQueue[i] = new Queue<Projectile>();
+        }
+
+        projPrefabs[(int)ProjType.Arrow] = Resources.Load<Arrow>("_Prefabs/Weapon/SM_Arrow_01");
+        GenerateProjectile(ProjType.Arrow);
+
+        projPrefabs[(int)ProjType.MagicMissile] = Resources.Load<MagicMissile>("_Prefabs/Weapon/SM_MagicMissile_01");
+        GenerateProjectile(ProjType.MagicMissile);
+    }
+
+    void GenerateProjectile(ProjType type)
+    {
+        for (int i = 0; i < CreateCount; i++)
+        {
+            projQueue[(int)type].Enqueue(CreateProjectile(type));
         }
     }
 
-    void CreateArrow(int Count)
+    Projectile CreateProjectile(ProjType type)
     {
-        for (int i = 0; i < Count; i++)
-        {
-            ArrowQueue.Enqueue(CreateNewArrow());
-        }
+        Projectile newProj = Instantiate(projPrefabs[(int)type], this.transform);
+        newProj.gameObject.SetActive(false);
+        newProj.transform.position = Vector3.zero;
+
+        return newProj;
     }
 
-    Arrow CreateNewArrow()
+    public Projectile GetObject(ProjType type)
     {
-        Arrow newArrow = Instantiate(ArrowPrefab).GetComponent<Arrow>();
-        newArrow.gameObject.SetActive(false);
-        newArrow.transform.position = Vector3.zero;
-
-        return newArrow;
-    }
-
-    public static Arrow GetObject()
-    {
-        if(instance.ArrowQueue.Count > 0)
+        if(projQueue[(int)type].Count > 0)
         {
-            Arrow arrow = instance.ArrowQueue.Dequeue();
+            Projectile arrow = projQueue[(int)type].Dequeue();
             arrow.gameObject.SetActive(true);
 
             return arrow;
@@ -65,27 +72,17 @@ public class ObjectManager : MonoBehaviour
 
         else
         {
-            Arrow arrow = instance.CreateNewArrow();
-            arrow.gameObject.SetActive(true);
+            Projectile newProj = CreateProjectile(type);
+            newProj.gameObject.SetActive(true);
 
-            return arrow;
+            return newProj;
         }
     }
 
-    public static void ReturnObject(Arrow Object)
+    public static void ReturnObject(Projectile Object, ProjType type)
     {
         Object.gameObject.SetActive(false);
         Object.transform.position = Vector3.zero;
-        instance.ArrowQueue.Enqueue(Object);
-    }
-
-    void Start()
-    {
-        
-    }
-
-    void Update()
-    {
-        
+        instance.projQueue[(int)type].Enqueue(Object);
     }
 }

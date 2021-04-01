@@ -9,16 +9,55 @@ public class PriestType : Creature
         base.OnDie();
     }
 
+    protected override void ActiveSkill(int index)
+    {
+        base.ActiveSkill(index);
+    }
+
     public override void OnDamage(Vector3 hitPoint, Vector3 hitNormal, float damage)
     {
         base.OnDamage(hitPoint, hitNormal, damage);
     }
 
-    public virtual void Shoot()
+    public override void Shoot()
     {
-        if (null != target)
-        {
+        base.Shoot();
+    }
 
+    float animationTime = 0.0f;
+    protected override IEnumerator OnAttack()
+    {
+        base.OnAttack();
+
+        if (canAttack)
+        {
+            animator.SetInteger("AttackNum", UnityEngine.Random.Range(0, 2));
+            animator.SetTrigger("OnAttack");
+            canAttack = false;
+
+            yield return new WaitForEndOfFrame();
+
+            animationTime = animator.GetCurrentAnimatorStateInfo(0).length;
         }
+
+        else
+        {
+            TargetLookAt();
+
+            yield return new WaitForSeconds(animationTime);
+
+            CurrentState = State.Idle;
+        }
+    }
+
+    private void Start()
+    {
+        Initialize();
+    }
+
+    void Update()
+    {
+        CheckState();
+        AttackTimer();
     }
 }

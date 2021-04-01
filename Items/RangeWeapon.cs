@@ -11,15 +11,8 @@ public class RangeWeapon : Weapon
 
     }
 
-    // Start is called before the first frame update
     void Start()
     {
         base.MyCollider = GetComponent<Collider>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

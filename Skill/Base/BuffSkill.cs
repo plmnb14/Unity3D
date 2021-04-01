@@ -5,16 +5,16 @@ using UnityEngine.UI;
 
 public class BuffSkill : SkillData
 {
-    Image icon; // Imange Type을 Filled로 바꾸기
-
+    protected Image icon;
+    protected Image iconBack;
     public override void Initialization(Creature user, int Index)
     {
         if (isCooldown || !CheckManaCost(user.MyStatus.Mana))
             return;
 
-        base.Initialization(user, Index);
-        //icon.fillAmount = 1.0f;
-        //base.Execute();
+        icon.fillAmount = 1.0f;
+
+        SetDefault(user, Index);
     }
 
     WaitForSeconds waitSeconds = new WaitForSeconds(0.1f);
@@ -25,12 +25,12 @@ public class BuffSkill : SkillData
         while (durationTime > 0)
         {
             durationTime -= 0.1f;
-            //icon.fillAmount = currentTime / skillData.duration;
+            icon.fillAmount = durationTime / skillData.duration;
             yield return waitSeconds;
         }
 
+        icon.fillAmount = 0.0f;
         DeActivation();
-        //icon.fillAmount = 0.0f;
     }
 
     protected virtual void DeActivation()
@@ -45,5 +45,18 @@ public class BuffSkill : SkillData
         StartCoroutine(BuffDuration());
 
         StartCoroutine(CoolDown());
+    }
+
+    protected void Loadchild()
+    {
+        icon = this.transform.GetChild(1).GetComponent<Image>();
+        iconBack = this.transform.GetChild(0).GetComponent<Image>();
+    }
+
+    protected override IEnumerator CoolDown()
+    {
+        yield return base.CoolDown();
+
+        this.gameObject.SetActive(false);
     }
 }

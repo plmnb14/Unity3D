@@ -31,11 +31,8 @@ public class SkillData : MonoBehaviour
         return mana >= skillData.manaCost ? true : false;
     }
 
-    public virtual void Initialization(Creature user, int Index)
+    public virtual void SetDefault(Creature user, int Index)
     {
-        if (isCooldown || !CheckManaCost(user.MyStatus.Mana))
-            return;
-
         Owner = user;
         animator = Owner.gameObject.GetComponent<Animator>();
         animator.SetTrigger(skillData.stateName);
@@ -47,7 +44,14 @@ public class SkillData : MonoBehaviour
 
         SkillcoolDown += Owner.GetComponent<Creature>().CooldownEnd;
         SkillisEnd += Owner.GetComponent<Creature>().EndSkill;
+    }
 
+    public virtual void Initialization(Creature user, int Index)
+    {
+        if (isCooldown || !CheckManaCost(user.MyStatus.Mana))
+            return;
+
+        SetDefault(user, Index);
         Execute();
     }
 
@@ -78,7 +82,7 @@ public class SkillData : MonoBehaviour
     }
 
     WaitForSeconds waitSecond = new WaitForSeconds(0.1f);
-    protected IEnumerator CoolDown()
+    protected virtual IEnumerator CoolDown()
     {
         while (currentTime > 0)
         {

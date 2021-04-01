@@ -4,11 +4,14 @@ using UnityEngine;
 
 public class ArcherType : Creature
 {
-    public GameObject AimPoint;
-
     public override void OnDie()
     {
         base.OnDie();
+    }
+
+    protected override void ActiveSkill(int index)
+    {
+        base.ActiveSkill(index);
     }
 
     public override void OnDamage(Vector3 hitPoint, Vector3 hitNormal, float damage)
@@ -16,50 +19,34 @@ public class ArcherType : Creature
         base.OnDamage(hitPoint, hitNormal, damage);
     }
 
-    public virtual void Shoot()
+    public override void Shoot()
     {
-        if (null != target)
-        {
-            Arrow newArrow = ObjectManager.GetObject();
-            Vector3 Dir = target.transform.position - transform.position;
-            newArrow.Initialize(AimPoint.transform.position, Dir, target.gameObject.layer, MyStatus.AttackDamage);
-        }
+        base.Shoot();
     }
 
+    float animationTime = 0.0f;
     protected override IEnumerator OnAttack()
     {
         base.OnAttack();
 
         if (canAttack)
         {
-            canAttack = false;
             animator.SetInteger("AttackNum", UnityEngine.Random.Range(0, 3));
-            animator.SetBool("isAttack", true);
+            animator.SetTrigger("isAttack");
+            canAttack = false;
+
+            yield return new WaitForEndOfFrame();
+
+            animationTime = animator.GetCurrentAnimatorStateInfo(0).length;
         }
 
         else
         {
             TargetLookAt();
 
-            yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
+            yield return new WaitForSeconds(animationTime);
 
             CurrentState = State.Idle;
-            animator.SetBool("isAttack", false);
         }
-    }
-    private void Awake()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
-
-    void Start()
-    {
-        base.Initialize();
-    }
-
-    void Update()
-    {
-        CheckState();
-        AttackTimer();
     }
 }

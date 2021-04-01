@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class WorldHPSlider : MonoBehaviour
 {
     private Slider HpSlider;
+    private GameObject buffCanvas;
 
     public void OnDie()
     {
@@ -30,12 +31,17 @@ public class WorldHPSlider : MonoBehaviour
 
     public void SetupData()
     {
+        transform.position += Vector3.up * 2.2f;
+
         HpSlider = transform.GetChild(0).GetComponent<Slider>();
         HpSlider.gameObject.SetActive(true);
+
+        buffCanvas = transform.GetChild(2).gameObject;
     }
 
-    void Start()
+    public void PutBuffOnGrid(BuffSkill skill)
     {
-
+        skill.transform.SetParent(buffCanvas.transform);
+        skill.transform.localPosition = Vector3.zero;
     }
 }

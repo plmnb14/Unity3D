@@ -48,6 +48,9 @@ public class CreatureInven
 public delegate void HealthChange(float value);
 public class Creature : MonoBehaviour
 {
+    public GameObject AimPoint;
+
+    public Dictionary<string, BuffSkill> buffDictionary { get; set; } = new Dictionary<string, BuffSkill>();
     protected SkillData[] skills = new SkillData[3];
     protected bool[] skillCooldown = new bool[3];
 
@@ -76,7 +79,7 @@ public class Creature : MonoBehaviour
     protected int AttackCount = 0;
     protected int AttackCountMax = 1;
     protected int AttackComboCount = 0;
-    protected float AttackTime = 0;
+    protected float AttackTime = 0.0f;
 
     // bool
     public bool Dead { get; set; } = false;
@@ -86,9 +89,6 @@ public class Creature : MonoBehaviour
 
 
     private WorldHPSlider HpUI;
-    //
-    private ParticleSystem bloodEffect;
-    private ParticleSystem hitEffect;
 
     // component
     protected NavMeshAgent pathFinder; // 경로계산 AI 에이전트
@@ -100,6 +100,18 @@ public class Creature : MonoBehaviour
     protected Creature target = null;
     protected bool hasTarget = false;
     protected float DetectRange = 100.0f;
+
+    public void AddBuff(BuffSkill buff)
+    {
+        buff.gameObject.SetActive(true);
+        HpUI.PutBuffOnGrid(buff);
+        buffDictionary.Add(buff.skillData.skillName, buff);
+    }
+
+    public void RemoveBuff(BuffSkill buff)
+    {
+        buffDictionary.Remove(buff.skillData.skillName);
+    }
 
     public void UpdateHP()
     {
@@ -165,19 +177,78 @@ public class Creature : MonoBehaviour
         return 0.0f < calcDamage ? calcDamage : 0.0f;
     }
 
+    public virtual void GainHealth(float value)
+    {
+        if(MyStatus.HitPoint < OriginStatus.HitPoint)
+        {
+            float gap = OriginStatus.HitPoint - MyStatus.HitPoint;
+            float finalValue = 0.0f;
+
+            if(gap > value)
+            {
+                MyStatus.HitPoint += value;
+                finalValue = value;
+            }
+
+            else
+            {
+                MyStatus.HitPoint += gap;
+                finalValue = gap;
+            }
+
+            var healParticle = ParticleManager.instance.GetParticle("Heal_Once");
+            healParticle.transform.position = transform.position;
+            healParticle.GetComponent<ParticleObject>().OnPlay("Heal_Once");
+
+            var UnderParticle = ParticleManager.instance.GetParticle("Heal_Under");
+            UnderParticle.transform.position = transform.position;
+            UnderParticle.GetComponent<ParticleObject>().OnPlay("Heal_Under");
+
+            healthChange(MyStatus.HitPoint);
+            StageBattleManager.instance.GetDamageFont(finalValue, transform.position, DamageFont.DamageFontTypes.Heal);
+        }
+    }
+
+    private void HitParticlePlay(Vector3 hitPoint, Vector3 hitNormal)
+    {
+        var bloodParticle = ParticleManager.instance.GetParticle("Blood_Small");
+        bloodParticle.transform.position = hitPoint;
+        bloodParticle.transform.rotation = Quaternion.LookRotation(hitNormal);
+        bloodParticle.GetComponent<ParticleObject>().OnPlay("Blood_Small");
+
+        var hitParticle = ParticleManager.instance.GetParticle("Hit_Small");
+        hitParticle.transform.position = hitPoint;
+        hitParticle.transform.rotation = Quaternion.LookRotation(hitNormal);
+        hitParticle.GetComponent<ParticleObject>().OnPlay("Hit_Small");
+    }
+
+    private void HitDamageCaculate(float damage, out float finalDamage)
+    {
+        float FinalDamage = CaculateFinalDamage(damage);
+        finalDamage = FinalDamage;
+        MyStatus.HitPoint -= FinalDamage;
+        healthChange(MyStatus.HitPoint);
+    }
+
+    public virtual void OnDamage(Vector3 hitPoint, Vector3 hitNormal, float damage, out float finalDamage)
+    {
+        HitParticlePlay(hitPoint, hitNormal);
+        HitDamageCaculate(damage, out finalDamage);
+
+        StageBattleManager.instance.GetDamageFont(finalDamage, transform.position);
+
+        if (0 >= MyStatus.HitPoint && !Dead)
+        {
+            OnDie();
+        }
+    }
+
     public virtual void OnDamage(Vector3 hitPoint, Vector3 hitNormal, float damage)
     {
+        HitParticlePlay(hitPoint, hitNormal);
+        HitDamageCaculate(damage, out float finalDamage);
 
-        bloodEffect.transform.position = hitPoint;
-        bloodEffect.transform.rotation = Quaternion.LookRotation(hitNormal);
-        bloodEffect.Play();
-
-        hitEffect.transform.position = hitPoint;
-        hitEffect.transform.rotation = Quaternion.LookRotation(hitNormal);
-        hitEffect.Play();
-
-        MyStatus.HitPoint -= CaculateFinalDamage(damage);
-        healthChange(MyStatus.HitPoint);
+        StageBattleManager.instance.GetDamageFont(finalDamage, transform.position);
 
         if (0 >= MyStatus.HitPoint && !Dead)
         {
@@ -190,7 +261,7 @@ public class Creature : MonoBehaviour
         if (Dead || CurrentState == State.Attack)
             return;
 
-        if(!canAttack && !animator.GetBool("isAttack"))
+        if(!canAttack)
         {
             AttackTime += Time.deltaTime; 
 
@@ -227,6 +298,17 @@ public class Creature : MonoBehaviour
                 isPlayingSkill = true;
                 break;
             }
+        }
+    }
+
+    public virtual void Shoot()
+    {
+        if (null != target)
+        {
+            Projectile newArrow = ObjectManager.instance.GetObject(ObjectManager.ProjType.Arrow);
+            Vector3 Dir = target.transform.position - transform.position;
+            newArrow.Initialize(AimPoint.transform.position, Dir, target.gameObject.layer, MyStatus.AttackDamage);
+            newArrow.Owner = this;
         }
     }
 
@@ -420,9 +502,6 @@ public class Creature : MonoBehaviour
         HpUI.SetUpHealth(MyStatus.HitPoint);
         UpdateHP();
 
-        bloodEffect = Instantiate(Resources.Load<ParticleSystem>("_Prefabs/Effect/Hit_Blood_Effect_01"), transform);
-        hitEffect = Instantiate(Resources.Load<ParticleSystem>("_Prefabs/Effect/Hit_Effect_01"), transform);
-
         pathFinder = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         rigidbody = GetComponent<Rigidbody>();
@@ -438,6 +517,8 @@ public class Creature : MonoBehaviour
         rigidbody.angularVelocity = Vector3.zero;
         rigidbody.isKinematic = true;
 
-        MyWeapon.GetComponent<Collider>().enabled = false;
+        var collider = MyWeapon.GetComponent<Collider>();
+        if(collider != null)
+            MyWeapon.GetComponent<Collider>().enabled = false;
     }
 }
