@@ -41,10 +41,11 @@ public class MagicMissile : Projectile
 
             CollisionTarget.OnDamage(hitPoint, hitNormal, projectileDamage, out float finalDamage);
 
-            StageBattleManager.instance.FindTarget(StageBattleManager.StatusType.HitPoint, Owner.gameObject.layer).GainHealth(finalDamage * 0.5f);
+            StageBattleManager.instance.FindTarget(StageBattleManager.StatusType.HitPoint, Owner.gameObject.layer).GainHealth(finalDamage);
 
             var ExplosionParticle = ParticleManager.instance.GetParticle("MagicMissile_Dead");
-            ExplosionParticle.transform.position = hitPoint;
+            ExplosionParticle.transform.parent = null;
+            ExplosionParticle.transform.position = transform.position;
             ExplosionParticle.GetComponent<ParticleObject>().OnPlay("MagicMissile_Dead");
 
             OnDead();

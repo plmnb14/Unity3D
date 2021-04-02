@@ -9,6 +9,9 @@ public class Buff_ArmorUp : BuffSkill
 
     public override void ActiveSkill()
     {
+        if (Owner.Dead)
+            return;
+
         Owner.AddBuff(this);
 
         icon.gameObject.SetActive(true);

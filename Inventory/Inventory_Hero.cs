@@ -57,7 +57,7 @@ public class Inventory_Hero : Inventory
     private void LoadHeroInvenData()
     {
         List<CreatureData> tmpData;
-        DataStruct.LoadData<CreatureData>(out tmpData, "Player_HeroData.json");
+        DataStruct.LoadData<CreatureData>(out tmpData, "Player_HeroData");
 
         CreateHerotoInven(ref tmpData);
         SetupInvenImage(ref tmpData);

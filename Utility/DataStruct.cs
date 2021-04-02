@@ -8,40 +8,40 @@ public class DataStruct : MonoBehaviour
     static public void SaveData<T>(T singleData, string jsonDataName)
     {
         string jsonData = JsonUtility.ToJson(singleData, true);
-        string path = Application.dataPath + "/Data/Json/" + jsonDataName;
+        string path = Application.dataPath + "/Data/Json/" + jsonDataName + ".json";
         File.WriteAllText(path, jsonData);
     }
 
     static public void SaveData<T>(List<T> list, string jsonDataName)
     {
         string jsonData = JsonUtility.ToJson(new Serialization<T>(list), true);
-        string path = Application.dataPath + "/Data/Json/" + jsonDataName;
+        string path = Application.dataPath + "/Data/Json/" + jsonDataName + ".json";
         File.WriteAllText(path, jsonData);
     }
 
     static public void SaveData<TKey, TValue>(Dictionary<TKey, TValue> dic, string jsonDataName)
     {
         string jsonData = JsonUtility.ToJson(new Serialization<TKey, TValue>(dic), true);
-        string path = Application.dataPath + "/Data/Json/" + jsonDataName;
+        string path = Application.dataPath + "/Data/Json/" + jsonDataName + ".json";
         File.WriteAllText(path, jsonData);
     }
 
     static public void LoadData<T>(string dataName)
     {
-        string path = Application.dataPath + "/Data/Json/" + dataName;
+        string path = Application.dataPath + "/Data/Json/" + dataName + ".json";
         string jsonData = File.ReadAllText(path);
     }
 
     static public void LoadData<T>(out List<T> list, string dataName)
     {
-        string path = Application.dataPath + "/Data/Json/" + dataName;
+        string path = Application.dataPath + "/Data/Json/" + dataName + ".json";
         string jsonData = File.ReadAllText(path);
         list = JsonUtility.FromJson<Serialization<T>>(jsonData).ToList();
     }
 
     static public void LoadData<TKey, TValue>(out Dictionary<TKey, TValue> dic, string dataName)
     {
-        string path = Application.dataPath + "/Data/Json/" + dataName;
+        string path = Application.dataPath + "/Data/Json/" + dataName + ".json";
         string jsonData = File.ReadAllText(path);
         dic = JsonUtility.FromJson<Serialization<TKey, TValue>>(jsonData).ToDictionary();
     }
@@ -94,14 +94,29 @@ public class Serialization<TKey, TValue> : ISerializationCallbackReceiver
     }
 }
 
+[System.Serializable]
+public class BaseData
+{
+    public string Name;
+    public string FF;
+
+    public virtual BaseData DeepCopy()
+    {
+        BaseData copy = new BaseData();
+        copy.Name = this.Name;
+
+        return copy;
+    }
+}
 
 [System.Serializable]
-public class CreatureData
+public class CreatureData : BaseData
 {
-    public CreatureData DeepCopy()
+    public override BaseData DeepCopy()
     {
+        base.DeepCopy();
+
         CreatureData copy = new CreatureData();
-        copy.Name = this.Name;
         copy.isCaptain = this.isCaptain;
         copy.UnitType = this.UnitType;
         copy.Level = this.Level;
@@ -118,7 +133,6 @@ public class CreatureData
         return copy;
     }
 
-    public string Name;
     public bool isCaptain = false;
     public int UnitType;
     public int Level;
@@ -133,16 +147,16 @@ public class CreatureData
     public float MoveSpeed;
 }
 
-
 [System.Serializable]
-public class SkillBaseData
+public class SkillBaseData : BaseData
 {
-    public SkillBaseData DeepCopy()
+    public override BaseData DeepCopy()
     {
+        base.DeepCopy();
+
         SkillBaseData copy = new SkillBaseData();
         copy.skillType = this.skillType;
-        copy.skillName = this.targetType;
-        copy.skillName = this.skillName;
+        copy.targetType = this.targetType;
         copy.stateName = this.stateName;
         copy.cooltime = this.cooltime;
         copy.manaCost = this.manaCost;
@@ -154,7 +168,6 @@ public class SkillBaseData
 
     public string skillType;
     public string targetType;
-    public string skillName;
     public string stateName;
     public float cooltime;
     public float manaCost;

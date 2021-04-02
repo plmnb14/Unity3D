@@ -32,7 +32,7 @@ public class ArcherType : Creature
         if (canAttack)
         {
             animator.SetInteger("AttackNum", UnityEngine.Random.Range(0, 3));
-            animator.SetTrigger("isAttack");
+            animator.SetTrigger("OnAttack");
             canAttack = false;
 
             yield return new WaitForEndOfFrame();

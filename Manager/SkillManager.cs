@@ -35,29 +35,9 @@ public class SkillManager : MonoBehaviour
         }
     }
 
-    public void SaveSkillData()
-    {
-        SkillBaseData tmpData1 = new SkillBaseData();
-        tmpData1.cooltime = 10.0f;
-        tmpData1.manaCost = 10.0f;
-        tmpData1.stateName = "Hello";
-        tmpData1.skillName = "GroundSmash";
-
-        SkillBaseData tmpData2 = new SkillBaseData();
-        tmpData2.cooltime = 10.0f;
-        tmpData2.manaCost = 10.0f;
-        tmpData2.stateName = "Hello";
-        tmpData2.skillName = "IU";
-
-        SkillDictionary.Add(tmpData1.skillName, tmpData1);
-        SkillDictionary.Add(tmpData2.skillName, tmpData2);
-
-        DataStruct.SaveData<string, SkillBaseData>(SkillDictionary, "Warrior_08_SkillData.json");
-    }
-
     public void LoadSkillData()
     {
-        DataStruct.LoadData<string, SkillBaseData>(out SkillDictionary, "Warrior_08_SkillData.json");
+        DataStruct.LoadData<string, SkillBaseData>(out SkillDictionary, "Warrior_08_SkillData");
     }
 
     private void Awake()

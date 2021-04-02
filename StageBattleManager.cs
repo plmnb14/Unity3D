@@ -156,12 +156,12 @@ public class StageBattleManager : MonoBehaviour
 
         for (int i = 0; i < TeamSlotIndex.Count; i++)
         {
-            Creature instance =  Instantiate(Resources.Load<Creature>("_Prefabs/Creature/" + TeamList[TeamIndex[i]].Name + "_Prefab"));
+            Creature instance = Instantiate(Resources.Load<Creature>("_Prefabs/Creature/" + TeamList[TeamIndex[i]].Name + "_Prefab"));
 
-            CreatureData tmpData = TeamList[TeamIndex[i]].DeepCopy();
+            CreatureData tmpData = (CreatureData)TeamList[TeamIndex[i]].DeepCopy();
             instance.MyStatus = tmpData;
             instance.MyStatus.AttackDamage *= 1.5f;
-            instance.OriginStatus = tmpData.DeepCopy();
+            instance.OriginStatus = (CreatureData)tmpData.DeepCopy();
             instance.transform.position = coordTileList[TeamSlotIndex[i]];
             instance.transform.rotation = Quaternion.Euler(new Vector3(0.0f, 90.0f, 0.0f));
             instance.gameObject.layer = LayerMask.NameToLayer("Player");
@@ -177,12 +177,12 @@ public class StageBattleManager : MonoBehaviour
 
         for (int i = 0; i < TeamSlotIndex.Count; i++)
         {
-            Creature instance = Instantiate(Resources.Load<Creature>("_Prefabs/Creature/" + TeamList[TeamIndex[i]].Name + "_Prefab"));
+            Creature instance = Instantiate(Resources.Load<Creature>("_Prefabs/Creature/" + DataManager.instance.MonsterDataDic["OrkWarrior_01"].Name + "_Prefab"));
 
-            CreatureData tmpData = TeamList[TeamIndex[i]].DeepCopy();
+            CreatureData tmpData = (CreatureData)DataManager.instance.MonsterDataDic["OrkWarrior_01"].DeepCopy();
             instance.MyStatus = tmpData;
-            instance.OriginStatus = tmpData.DeepCopy();
-            instance.transform.position = new Vector3(coordTileList[TeamSlotIndex[i]].x * -1.0f, coordTileList[TeamSlotIndex[i]].y, coordTileList[TeamSlotIndex[i]].z);
+            instance.OriginStatus = (CreatureData)tmpData.DeepCopy();
+            instance.transform.position = new Vector3(coordTileList[TeamSlotIndex[i]].x * -1.0f + 6.0f, coordTileList[TeamSlotIndex[i]].y, coordTileList[TeamSlotIndex[i]].z);
             instance.transform.rotation = Quaternion.Euler(new Vector3(0.0f, -90.0f, 0.0f));
             instance.gameObject.layer = LayerMask.NameToLayer("Enemy");
             instance.TargetlayerMask = 1 << LayerMask.NameToLayer("Player");

@@ -43,9 +43,9 @@ public class ParticleManager : MonoBehaviour
             if (particleDic[name].Count == 1)
             {
                 GameObject obj = Instantiate(particleDic[name].Peek());
+                particleDic[name].Peek().SetActive(true);
                 CreatreParticle(particleDic[name], obj);
 
-                particleDic[name].Peek().SetActive(true);
                 return particleDic[name].Dequeue();
             }
 
@@ -76,6 +76,7 @@ public class ParticleManager : MonoBehaviour
         {
             GameObject obj = Instantiate(Resources.Load<GameObject>(path));
             obj.transform.SetParent(this.transform);
+            obj.transform.position = Vector3.zero;
             obj.SetActive(false);
             queue.Enqueue(obj);
         }
@@ -87,6 +88,7 @@ public class ParticleManager : MonoBehaviour
         {
             GameObject obj = Instantiate(gameObject);
             obj.transform.SetParent(this.transform);
+            obj.transform.position = Vector3.zero;
             obj.SetActive(false);
             queue.Enqueue(obj);
         }

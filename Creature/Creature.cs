@@ -105,12 +105,12 @@ public class Creature : MonoBehaviour
     {
         buff.gameObject.SetActive(true);
         HpUI.PutBuffOnGrid(buff);
-        buffDictionary.Add(buff.skillData.skillName, buff);
+        buffDictionary.Add(buff.skillData.Name, buff);
     }
 
     public void RemoveBuff(BuffSkill buff)
     {
-        buffDictionary.Remove(buff.skillData.skillName);
+        buffDictionary.Remove(buff.skillData.Name);
     }
 
     public void UpdateHP()
@@ -126,6 +126,9 @@ public class Creature : MonoBehaviour
 
     protected virtual void ActiveSkill(int index)
     {
+        if (Dead)
+            return;
+
         skills[index].ActiveSkill();
     }
 
@@ -149,7 +152,7 @@ public class Creature : MonoBehaviour
 
         hasTarget = false;
         CurrentState = State.Dead;
-        animator.SetTrigger("Dead");
+        animator.SetTrigger("OnDead");
         Dead = true;
 
         Collider[] MyColliders = GetComponents<Collider>();
@@ -330,7 +333,6 @@ public class Creature : MonoBehaviour
             if(null == target || target.Dead)
             {
                 animator.SetBool("isWalk", false);
-                animator.SetBool("isAttack", false);
                 CurrentState = State.Idle;
                 target = null;
                 hasTarget = false;
@@ -447,7 +449,6 @@ public class Creature : MonoBehaviour
                 if (target.Dead)
                 {
                     animator.SetBool("isWalk", false);
-                    animator.SetBool("isAttack", false);
                     CurrentState = State.Idle;
                     target = null;
                     hasTarget = false;
@@ -457,7 +458,6 @@ public class Creature : MonoBehaviour
             else
             {
                 animator.SetBool("isWalk", false);
-                animator.SetBool("isAttack", false);
                 CurrentState = State.Idle;
                 target = null;
                 hasTarget = false;

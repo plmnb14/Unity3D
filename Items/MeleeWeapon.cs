@@ -21,7 +21,7 @@ public class MeleeWeapon : Weapon
             Vector3 hitPoint = other.ClosestPoint(transform.position);
             Vector3 hitNormal = transform.position - other.transform.position;
 
-            CollisionTarget.OnDamage(hitPoint, hitNormal, 100.0f);
+            CollisionTarget.OnDamage(hitPoint, hitNormal, WeaponDamage);
         }
     }
 }

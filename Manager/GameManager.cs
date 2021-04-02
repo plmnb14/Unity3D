@@ -29,19 +29,4 @@ public class GameManager : MonoBehaviour
 
         DontDestroyOnLoad(gameObject);
     }
-
-    void Start()
-    {
-        //UnitDataDic = CSVReader.Read("UnitData.csv");
-
-        // 소환코드
-        //GameObject Instance = Resources.Load<GameObject>("_Prefabs/Weapon/SM_WPN_2HandAxe_01");
-        //Instantiate(Instance, Instance.transform.position, Quaternion.identity);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

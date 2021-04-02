@@ -40,6 +40,9 @@ public class BuffSkill : SkillData
 
     protected override void Execute()
     {
+        if (Owner.Dead)
+            return;
+
         StartCoroutine(Activation());
 
         StartCoroutine(BuffDuration());

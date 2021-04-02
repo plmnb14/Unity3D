@@ -27,8 +27,8 @@ public class WarriorType : Creature
         if (canAttack)
         {
             canAttack = false;
-            animator.SetInteger("AttackNum", UnityEngine.Random.Range(0, 3));
-            animator.SetTrigger("isAttack");
+            animator.SetInteger("AttackNum", UnityEngine.Random.Range(0, 2));
+            animator.SetTrigger("OnAttack");
 
             yield return new WaitForEndOfFrame();
 
