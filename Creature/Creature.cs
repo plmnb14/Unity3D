@@ -49,13 +49,14 @@ public delegate void HealthChange(float value);
 public class Creature : MonoBehaviour
 {
     public GameObject AimPoint;
+    public Vector3 targetWayPoint { get; set; } = new Vector3();
 
     public Dictionary<string, BuffSkill> buffDictionary { get; set; } = new Dictionary<string, BuffSkill>();
     protected SkillData[] skills = new SkillData[3];
     protected bool[] skillCooldown = new bool[3];
 
     public event HealthChange healthChange;
-    protected enum State { Idle, Walk, Chase, Hit, Attack, Skill, Dead };
+    public enum State { Pause, MoveStage, Idle, Walk, Chase, Hit, Attack, Skill, Dead };
     protected enum UnitType { Warrior, Magician, Arhcer, Priest };
 
     // event
@@ -66,7 +67,7 @@ public class Creature : MonoBehaviour
     public Weapon MyWeapon;
 
     // enum
-    protected State CurrentState { get; set; } = State.Idle;
+    public State CurrentState { get; set; } = State.Pause;
     protected UnitType CurrentUnitType { get; set; } = UnitType.Warrior;
 
 
@@ -100,6 +101,19 @@ public class Creature : MonoBehaviour
     protected Creature target = null;
     protected bool hasTarget = false;
     protected float DetectRange = 100.0f;
+
+    public void UpdateNavigation()
+    {
+        rigidbody.velocity = Vector3.zero;
+        rigidbody.angularVelocity = Vector3.zero;
+        rigidbody.isKinematic = true;
+
+        pathFinder.isStopped = false;
+        pathFinder.velocity = Vector3.zero;
+        pathFinder.updatePosition = true;
+        pathFinder.updateRotation = true;
+        pathFinder.ResetPath();
+    }
 
     public void AddBuff(BuffSkill buff)
     {
@@ -465,13 +479,50 @@ public class Creature : MonoBehaviour
         }
     }
 
-    public void CheckState()
+    private IEnumerator OnPause()
+    {
+        yield return new WaitForEndOfFrame();
+    }
+
+    public IEnumerator MoveStage()
+    {
+        animator.SetBool("isWalk", true);
+
+        while (Vector3.Distance(transform.position, targetWayPoint) > 0.08f)
+        {
+            Vector3 tmpDir = targetWayPoint - transform.position;
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(tmpDir), Time.deltaTime * 3.0f);
+
+            yield return new WaitForEndOfFrame();
+
+            float stepSpeed = 5.0f * Time.deltaTime; 
+            transform.position = Vector3.MoveTowards(transform.position, targetWayPoint, stepSpeed);
+        }
+
+        rigidbody.velocity = Vector3.zero;
+        transform.position = targetWayPoint;
+
+        animator.SetBool("isWalk", false);
+        CurrentState = State.Pause;
+
+        hasTarget = false;
+        target = null;
+
+        StageBattleManager.instance.WaveStart();
+    }
+    
+    protected void CheckState()
     {
         if (Dead)
             return;
 
         switch (CurrentState)
         {
+            //case State.Pause:
+            //    {
+            //        StartCoroutine(OnPause());
+            //        break;
+            //    }
             case State.Idle:
                 {
                     FindTarget();
@@ -506,7 +557,7 @@ public class Creature : MonoBehaviour
         animator = GetComponent<Animator>();
         rigidbody = GetComponent<Rigidbody>();
 
-        CurrentState = State.Idle;
+        CurrentState = State.Pause;
         CurrentUnitType = UnitType.Warrior;
 
         MyInventory = new CreatureInven();

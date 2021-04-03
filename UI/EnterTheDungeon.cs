@@ -8,7 +8,7 @@ public class EnterTheDungeon : MonoBehaviour, IPointerClickHandler
     public void OnPointerClick(PointerEventData eventData)
     {
         UIManager.instance.InvenList[2].OnActive(false);
-        Scene_Manager.SceneChange(4);
+        LoadingManager.LoadingScene("Scene_BattleStage");
     }
 
     void Start()

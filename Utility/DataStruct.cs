@@ -26,10 +26,11 @@ public class DataStruct : MonoBehaviour
         File.WriteAllText(path, jsonData);
     }
 
-    static public void LoadData<T>(string dataName)
+    static public void LoadData<T>(out T data, string dataName)
     {
         string path = Application.dataPath + "/Data/Json/" + dataName + ".json";
         string jsonData = File.ReadAllText(path);
+        data = JsonUtility.FromJson<T>(jsonData);
     }
 
     static public void LoadData<T>(out List<T> list, string dataName)
@@ -98,7 +99,6 @@ public class Serialization<TKey, TValue> : ISerializationCallbackReceiver
 public class BaseData
 {
     public string Name;
-    public string FF;
 
     public virtual BaseData DeepCopy()
     {
@@ -173,4 +173,45 @@ public class SkillBaseData : BaseData
     public float manaCost;
     public float duration;
     public float percentage;
+}
+
+[System.Serializable]
+public class StageMonsterData : BaseData
+{
+    public override BaseData DeepCopy()
+    {
+        base.DeepCopy();
+        StageMonsterData copy = new StageMonsterData();
+        copy.position = this.position;
+        copy.yRotate = this.yRotate;
+
+        return copy;
+    }
+
+    public Vector3 position;
+    public float yRotate;
+}
+
+[System.Serializable]
+public class StageInfo : BaseData
+{
+    public override BaseData DeepCopy()
+    {
+        base.DeepCopy();
+
+        StageInfo copy = new StageInfo();
+        copy.summonCount = this.summonCount;
+        copy.waveCount = this.waveCount;
+        copy.summonPerWave = this.summonPerWave;
+        copy.gold = this.gold;
+        copy.exp = this.exp;
+
+        return copy;
+    }
+
+    public int summonCount;
+    public int waveCount;
+    public List<int> summonPerWave;
+    public int gold;
+    public int exp;
 }
