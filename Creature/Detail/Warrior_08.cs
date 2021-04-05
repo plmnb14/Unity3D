@@ -10,15 +10,18 @@ public class Warrior_08 : WarriorType
         MyWeapon.GetComponent<Collider>().enabled = iValue == 0 ? false : true;
     }
 
+    private void Awake()
+    {
+        SkillManager.instance.GetSkillData("Skill_SmashGround", out skills[1], this);
+        SkillManager.instance.GetSkillData("Buff_ArmorUp", out skills[2], this);
+    }
+
     void Start()
     {
         base.Initialize();
 
-        SkillManager.instance.GetSkillData("Skill_SmashGround", out skills[1], this);
-        skills[1].targetMask = TargetlayerMask;
-
-        SkillManager.instance.GetSkillData("Buff_ArmorUp", out skills[2], this);
-        skills[2].targetMask = TargetlayerMask;
+        for(int i = 0; i < 2; i++)
+            skills[i+1].targetMask = TargetlayerMask;
     }
 
     void Update()

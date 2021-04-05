@@ -30,7 +30,7 @@ public class StageBattleManager : MonoBehaviour
     private Queue<Creature> MonsterReadyQueue = new Queue<Creature>();
     private Queue<DamageFont> damageFontQueue = new Queue<DamageFont>();
 
-    private bool OnFirst = false;
+    private bool OnFirst = true;
     private const int damageFontCount = 30;
     private int waveCount = 0;
     public int arrivedCount { get; set; } = 0;
@@ -335,7 +335,10 @@ public class StageBattleManager : MonoBehaviour
         {
             OnFirst = false;
             waveCountUI.gameObject.SetActive(true);
+            waveCountUI.Progess();
+
             playerHud.gameObject.SetActive(true);
+            playerHud.Progress();
         }
 
         ++waveCount;
@@ -373,7 +376,8 @@ public class StageBattleManager : MonoBehaviour
                 }
 
                 sumVector /= count;
-                tmp = new Vector3(0.0f, 3.5f, -5.0f);
+                sumVector += Vector3.up;
+                tmp = new Vector3(0.0f, 3.5f, -4.5f);
             }
 
             else
@@ -398,7 +402,8 @@ public class StageBattleManager : MonoBehaviour
                 }
 
                 sumVector /= count;
-                tmp = new Vector3(0.0f, 4.2f, -6.5f);
+                sumVector += Vector3.left;
+                tmp = new Vector3(0.0f, 5.2f, -6.5f);
             }
 
             Camera.main.transform.position = Vector3.Slerp(Camera.main.transform.position, sumVector + tmp, Time.deltaTime * 10.0f);

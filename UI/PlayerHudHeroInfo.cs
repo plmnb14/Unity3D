@@ -8,16 +8,17 @@ public class PlayerHudHeroInfo : PopUpUI
     private Image portrait;
     private HUDSkillInfo[] skillInfo;
     private StatSlider[] statSlider;
+    private Dictionary<string, BuffSkill> buffs;
 
     public void SetUp(Creature hero)
     {
         portrait.sprite = Resources.Load<Sprite>("UI/MiniPortrait/" + hero.MyStatus.Name);
 
-        for(int i = 0; i < 2; i++)
+        for (int i = 1; i < 3; i++)
         {
-            if(hero.skills[i+1] != null)
+            if(hero.skills[i] != null)
             {
-                skillInfo[i].SetUp(hero.skills[i+1].skillData);
+                skillInfo[i-1].SetUp(hero.skills[i].skillData);
             }
         }
 
@@ -29,19 +30,27 @@ public class PlayerHudHeroInfo : PopUpUI
         hero.activeSkill += OnSkillCooltime;
     }
 
+    public void BuffManage(BuffSkill buff, bool add)
+    {
+
+    }
+
     private void OnSkillCooltime(int skillIndex)
     {
-        skillInfo[skillIndex].ActiveSkill();
+        if(skillIndex-1 >= 0)
+            skillInfo[skillIndex-1].ActiveSkill();
     }
 
     private void Awake()
     {
+        buffs = new Dictionary<string, BuffSkill>();
+
         portrait = transform.GetChild(0).GetComponent<Image>();
 
         skillInfo = new HUDSkillInfo[2];
         skillInfo[0] = transform.GetChild(1).GetComponent<HUDSkillInfo>();
         skillInfo[1] = transform.GetChild(2).GetComponent<HUDSkillInfo>();
-
+        
         statSlider = new StatSlider[2];
         statSlider[0] = transform.GetChild(3).GetComponent<StatSlider>();
         statSlider[1] = transform.GetChild(4).GetComponent<StatSlider>();

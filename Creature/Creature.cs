@@ -47,6 +47,7 @@ public class CreatureInven
 
 public delegate void HealthChange(float value);
 public delegate void ActiveSkill(int value);
+public delegate void ActiveBuffSkill(BuffSkill value, bool add);
 public class Creature : MonoBehaviour
 {
     public GameObject AimPoint;
@@ -58,6 +59,7 @@ public class Creature : MonoBehaviour
 
     public event HealthChange healthChange;
     public event ActiveSkill activeSkill;
+    public event ActiveBuffSkill buffSkill;
     public enum State { Pause, MoveStage, Idle, Walk, Chase, Hit, Attack, Skill, Dead };
     protected enum UnitType { Warrior, Magician, Arhcer, Priest };
 
@@ -122,6 +124,9 @@ public class Creature : MonoBehaviour
         buff.gameObject.SetActive(true);
         HpUI.PutBuffOnGrid(buff);
         buffDictionary.Add(buff.skillData.Name, buff);
+
+        if (null != buffSkill)
+            buffSkill(buff, true);
     }
 
     public void RemoveBuff(BuffSkill buff)
@@ -307,11 +312,11 @@ public class Creature : MonoBehaviour
 
     protected virtual IEnumerator OnSkill()
     {
-        for(int i = 1; i < 3; i++)
-        {
-            while (isPlayingSkill)
-                yield return null;
+        while (isPlayingSkill)
+            yield return null;
 
+        for (int i = 1; i < 3; i++)
+        {
             if (!skills[i].isCooldown)
             {
                 skillCooldown[i] = true;
@@ -374,8 +379,8 @@ public class Creature : MonoBehaviour
 
                 else
                 {
-                    pathFinder.updatePosition = false;
-                    pathFinder.updateRotation = false;
+                    //pathFinder.updatePosition = false;
+                    //pathFinder.updateRotation = false;
                     pathFinder.isStopped = true;
                     pathFinder.velocity = Vector3.zero;
                     animator.SetBool("isWalk", false);

@@ -12,7 +12,7 @@ public class SkillData : MonoBehaviour
     public SkillBaseData skillData { get; set; }
     public LayerMask targetMask { get; set; }
 
-    public bool isCooldown { get; set; }
+    public bool isCooldown { get; set; } = false;
     protected float currentTime;
     protected float durationTime;
     protected float aniTime;
@@ -36,8 +36,6 @@ public class SkillData : MonoBehaviour
         Owner = user;
         animator = Owner.gameObject.GetComponent<Animator>();
         animator.SetTrigger(skillData.stateName);
-        aniTime = animator.GetNextAnimatorClipInfo(0).Length;
-        isCooldown = true;
         currentTime = skillData.cooltime;
         skillIndex = Index;
         durationTime = skillData.duration;
@@ -74,11 +72,27 @@ public class SkillData : MonoBehaviour
         StartCoroutine(CoolDown());
     }
 
+    private float animationTime = 0.0f;
     protected virtual IEnumerator Activation()
     {
-        yield return new WaitForSeconds(aniTime);
+        while(true)
+        {
+            if (false == isCooldown)
+            {
+                yield return new WaitForEndOfFrame();
 
-        SkillisEnd();
+                isCooldown = true;
+                animationTime = animator.GetCurrentAnimatorStateInfo(0).normalizedTime * 1.2f;
+            }
+
+            else
+            {
+                yield return new WaitForSeconds(animationTime);
+
+                SkillisEnd();
+                yield break;
+            }
+        }
     }
 
     WaitForSeconds waitSecond = new WaitForSeconds(0.1f);
@@ -86,7 +100,9 @@ public class SkillData : MonoBehaviour
     {
         while (currentTime > 0)
         {
-            currentTime -= 0.1f;
+            if(isCooldown)
+                currentTime -= 0.1f;
+
             yield return waitSecond;
         }
 

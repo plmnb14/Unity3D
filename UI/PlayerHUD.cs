@@ -9,11 +9,10 @@ public class PlayerHUD : PopUpUI
 
     public void SetUp(ref List<Creature> list)
     {
-        Debug.Log(list.Count);
         for(int i = 0; i < list.Count; i++)
         {
-            HeroInfo[i].SetUp(list[i]);
             HeroInfo[i].gameObject.SetActive(true);
+            HeroInfo[i].SetUp(list[i]);
         }
     }
 
