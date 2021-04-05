@@ -58,7 +58,8 @@ public class Inventory_Team : Inventory
 
     public void ResetTeamIndex()
     {
-
+        TeamIndex.Clear();
+        TeamSlotIndex.Clear();
     }
 
     public override void OnActive(bool boolen)

@@ -5,7 +5,6 @@ using UnityEngine;
 public class StageBattleManager : MonoBehaviour
 {
     public enum StatusType { HitPoint = 5, Mana, AttackDamage, Armor }
-
     public static StageBattleManager instance
     {
         get
@@ -20,6 +19,7 @@ public class StageBattleManager : MonoBehaviour
     }
     private static StageBattleManager m_instance;
 
+    private PlayerHUD playerHud;
     private const int wayPointCount = 5;
     private List<Vector3>[] coordTileList = new List<Vector3>[wayPointCount];
     private List<int> TeamSlotIndex = new List<int>();
@@ -30,6 +30,7 @@ public class StageBattleManager : MonoBehaviour
     private Queue<Creature> MonsterReadyQueue = new Queue<Creature>();
     private Queue<DamageFont> damageFontQueue = new Queue<DamageFont>();
 
+    private bool OnFirst = false;
     private const int damageFontCount = 30;
     private int waveCount = 0;
     public int arrivedCount { get; set; } = 0;
@@ -39,6 +40,11 @@ public class StageBattleManager : MonoBehaviour
     private int MonsterAliveCount { get; set; } = 0;
 
     DamageFont DamageFontPrefab;
+
+    private Dungeon_BattleResultPopUp resultUI;
+    private WaveCount waveCountUI;
+
+    public bool OnBattleStage;
 
     public void ReturnDamageFont(DamageFont obj)
     {
@@ -167,6 +173,7 @@ public class StageBattleManager : MonoBehaviour
     {
         var TeamInven = UIManager.instance.InvenList[2].GetComponent<Inventory_Team>();
         TeamInven.ReadyTeamIndex();
+
         TeamIndex = TeamInven.TeamIndex;
         TeamSlotIndex = TeamInven.TeamSlotIndex;
     }
@@ -180,7 +187,8 @@ public class StageBattleManager : MonoBehaviour
             playerAliveCount++;
             Creature instance = Instantiate(Resources.Load<Creature>("_Prefabs/Creature/" + TeamList[TeamIndex[i]].Name + "_Prefab"));
 
-            instance.OriginStatus = (CreatureData)TeamList[TeamIndex[i]].DeepCopy();
+            instance.OriginStatus = (CreatureData)(TeamList[TeamIndex[i]].DeepCopy());
+            instance.OriginStatus.Name = TeamList[TeamIndex[i]].DeepCopy().Name;
             instance.MyStatus = (CreatureData)instance.OriginStatus.DeepCopy();
             instance.transform.position = coordTileList[0][TeamSlotIndex[i]];
             instance.transform.rotation = Quaternion.Euler(new Vector3(0.0f, 90.0f, 0.0f));
@@ -233,7 +241,6 @@ public class StageBattleManager : MonoBehaviour
         if(MonsterAliveCount == 0)
         {
             OnBattle = false;
-            MonsterSummonList.Clear();
 
             if (waveCount < stageData.waveCount)
             {
@@ -242,9 +249,21 @@ public class StageBattleManager : MonoBehaviour
 
             else
             {
-                // 전부 클리어 했다!
+                MonsterSummonList.Clear();
+                StartCoroutine(WaitForEndStage());
             }
         }
+    }
+
+    private IEnumerator WaitForEndStage()
+    {
+        yield return new WaitForSeconds(2.0f);
+
+        var TeamInven = UIManager.instance.InvenList[2].GetComponent<Inventory_Team>();
+        TeamInven.ResetTeamIndex();
+
+        resultUI.gameObject.SetActive(true);
+        resultUI.Progress();
     }
 
     private IEnumerator WaitForBattleEnd()
@@ -301,7 +320,7 @@ public class StageBattleManager : MonoBehaviour
         foreach (var hero in TeamSummonList)
         {
             hero.CurrentState = Creature.State.Idle;
-            //hero.UpdateNavigation();
+            hero.UpdateNavigation();
         }
 
         foreach (var monster in MonsterSummonList)
@@ -312,7 +331,15 @@ public class StageBattleManager : MonoBehaviour
 
     public void MoveToNext()
     {
+        if(OnFirst)
+        {
+            OnFirst = false;
+            waveCountUI.gameObject.SetActive(true);
+            playerHud.gameObject.SetActive(true);
+        }
+
         ++waveCount;
+        waveCountUI.UpdateCount();
         for (int i = 0; i < TeamSummonList.Count; i++)
         {
             if (TeamSummonList[i].Dead)
@@ -326,70 +353,102 @@ public class StageBattleManager : MonoBehaviour
         }
     }
 
-    private void UpdateCamera()
+    private IEnumerator UpdateCamera()
     {
-        Vector3 sumVector = new Vector3();
-
-        if(!OnBattle)
+        while(OnBattleStage)
         {
-            int count = 0;
-            foreach (var creature in TeamSummonList)
-            {
-                if (creature.Dead)
-                    continue;
+            Vector3 sumVector = new Vector3();
+            Vector3 tmp;
 
-                ++count;
-                sumVector += creature.transform.position;
+            if (!OnBattle)
+            {
+                int count = 0;
+                foreach (var creature in TeamSummonList)
+                {
+                    if (creature.Dead)
+                        continue;
+
+                    ++count;
+                    sumVector += creature.transform.position;
+                }
+
+                sumVector /= count;
+                tmp = new Vector3(0.0f, 3.5f, -5.0f);
             }
 
-            sumVector /= count;
+            else
+            {
+                int count = 0;
+                foreach (var creature in TeamSummonList)
+                {
+                    if (creature.Dead)
+                        continue;
+
+                    ++count;
+                    sumVector += creature.transform.position;
+                }
+
+                foreach (var creature in MonsterSummonList)
+                {
+                    if (creature.Dead)
+                        continue;
+
+                    ++count;
+                    sumVector += creature.transform.position;
+                }
+
+                sumVector /= count;
+                tmp = new Vector3(0.0f, 4.2f, -6.5f);
+            }
+
+            Camera.main.transform.position = Vector3.Slerp(Camera.main.transform.position, sumVector + tmp, Time.deltaTime * 10.0f);
+            Camera.main.transform.forward = Vector3.Slerp(Camera.main.transform.forward, Vector3.Normalize(sumVector - Camera.main.transform.position), Time.deltaTime * 20.0f);
+
+            yield return null;
         }
+    }
 
-        else
-        {
-            int count = 0;
-            foreach (var creature in TeamSummonList)
-            {
-                if (creature.Dead)
-                    continue;
+    private void ReadyUI()
+    {
+        playerHud = Instantiate(Resources.Load<PlayerHUD>("_Prefabs/UI/Player HUD"));
+        playerHud.SetUp(ref TeamSummonList);
+        playerHud.gameObject.SetActive(false);
 
-                ++count;
-                sumVector += creature.transform.position;
-            }
+        resultUI = Instantiate(Resources.Load<Dungeon_BattleResultPopUp>("_Prefabs/UI/BattleResult PopUp"));
+        resultUI.gameObject.SetActive(false);
 
-            foreach (var creature in MonsterSummonList)
-            {
-                if (creature.Dead)
-                    continue;
+        waveCountUI = Instantiate(Resources.Load<WaveCount>("_Prefabs/UI/Wave UI"));
+        waveCountUI.SetUp(stageData.waveCount);
+        waveCountUI.gameObject.SetActive(false);
 
-                ++count;
-                sumVector += creature.transform.position;
-            }
-
-            sumVector /= count;
-        }
-
-        Vector3 tmp = new Vector3(0.0f, 4.2f, -7.0f); // 0 , 4.2, -8.0
-        Camera.main.transform.position = Vector3.Slerp(Camera.main.transform.position, sumVector + tmp, Time.deltaTime * 10.0f);
-        Camera.main.transform.forward = Vector3.Slerp(Camera.main.transform.forward, Vector3.Normalize(sumVector - Camera.main.transform.position), Time.deltaTime * 20.0f);
+        var obj = Instantiate(Resources.Load<Dungeon_BattleStartPopUp>("_Prefabs/UI/StageProgress PopUp HUD"));
+        obj.Progress();
     }
 
     private void Awake()
     {
+        //if (this != instance)
+        //{
+        //    Destroy(gameObject);
+        //}
+
+        //DontDestroyOnLoad(gameObject);
+
         GenerateCoordTile();
         GetTeamIndex();
 
-        StageData("Stage_01");
+        StageData(LoadingManager.nextScene);
         GenerateHeroCreature();
 
         GenerateDamageFont();
 
-        var obj =  Instantiate(Resources.Load<Dungeon_BattleStartPopUp>("_Prefabs/UI/StageProgress PopUp HUD"));
-        obj.Progress();
+        ReadyUI();
+
+        OnBattleStage = true;
     }
 
-    private void Update()
+    private void Start()
     {
-        UpdateCamera();
+        StartCoroutine(UpdateCamera());
     }
 }

@@ -114,9 +114,8 @@ public class CreatureData : BaseData
 {
     public override BaseData DeepCopy()
     {
-        base.DeepCopy();
-
         CreatureData copy = new CreatureData();
+        copy.Name = this.Name;
         copy.isCaptain = this.isCaptain;
         copy.UnitType = this.UnitType;
         copy.Level = this.Level;

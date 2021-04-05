@@ -5,54 +5,29 @@ using UnityEngine.UI;
 
 public class Dungeon_BattleStartPopUp : PopUpUI
 {
-    private const int childCount = 2;
-    private const float waitingTime = 1.0f;
-    private const float speed = 1.0f;
-    private Image[] childImage = new Image[childCount];
+    private CanvasGroup canvasGroup;
+    private bool fadeOut;
 
     public void Progress()
     {
-        StartCoroutine(Wait());
+        StartCoroutine(FadeInOut());
     }
 
-    private WaitForSeconds waitSecond = new WaitForSeconds(waitingTime);
-    private IEnumerator Wait()
+    public IEnumerator FadeInOut()
     {
-        yield return waitSecond;
+        StartCoroutine(FadeIn(canvasGroup, () => fadeOut = true));
 
-        StartCoroutine(FadeIn());
-    }
-
-    private IEnumerator FadeIn()
-    {
-        Color[] oldColor = new Color[childCount];
-        for (int i = 0; i < childCount; i++)
-        {
-            oldColor[i] = childImage[i].color;
-        }
-
-        float ratio = 1.0f;
-        while (ratio > 0.0f)
-        {
-            ratio -= 0.01f * speed;
-
-            for (int i = 0; i < childCount; i++)
-            {
-                childImage[i].color = oldColor[i] * ratio;
-            }
-
+        if(!fadeOut)
             yield return new WaitForEndOfFrame();
-        }
 
-        StageBattleManager.instance.MoveToNext();
-        this.gameObject.SetActive(false);
+        StartCoroutine(FadeOut(canvasGroup, true, true, 2.0f, 0.5f,
+            () => this.gameObject.SetActive(false),
+            () => StageBattleManager.instance.MoveToNext()));
     }
 
     private void Awake()
     {
-        for (int i = 0; i < childCount; i++)
-        {
-            childImage[i] = this.transform.GetChild(i).GetComponent<Image>();
-        }
+        canvasGroup = GetComponent<CanvasGroup>();
+        canvasGroup.alpha = 0.0f;
     }
 }

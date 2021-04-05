@@ -46,16 +46,18 @@ public class CreatureInven
 }
 
 public delegate void HealthChange(float value);
+public delegate void ActiveSkill(int value);
 public class Creature : MonoBehaviour
 {
     public GameObject AimPoint;
     public Vector3 targetWayPoint { get; set; } = new Vector3();
 
     public Dictionary<string, BuffSkill> buffDictionary { get; set; } = new Dictionary<string, BuffSkill>();
-    protected SkillData[] skills = new SkillData[3];
+    public SkillData[] skills = new SkillData[3];
     protected bool[] skillCooldown = new bool[3];
 
     public event HealthChange healthChange;
+    public event ActiveSkill activeSkill;
     public enum State { Pause, MoveStage, Idle, Walk, Chase, Hit, Attack, Skill, Dead };
     protected enum UnitType { Warrior, Magician, Arhcer, Priest };
 
@@ -174,6 +176,8 @@ public class Creature : MonoBehaviour
         {
             MyColliders[i].enabled = false;
         }
+
+        MyWeapon.gameObject.GetComponent<Collider>().enabled = false;
 
         rigidbody.useGravity = false;
         rigidbody.velocity = Vector3.zero;
@@ -313,6 +317,7 @@ public class Creature : MonoBehaviour
                 skillCooldown[i] = true;
                 skills[i].Initialization(this, i);
                 isPlayingSkill = true;
+                activeSkill(i);
                 break;
             }
         }
@@ -488,7 +493,7 @@ public class Creature : MonoBehaviour
     {
         animator.SetBool("isWalk", true);
 
-        while (Vector3.Distance(transform.position, targetWayPoint) > 0.08f)
+        while (Vector3.Distance(transform.position, targetWayPoint) > 0.1f)
         {
             Vector3 tmpDir = targetWayPoint - transform.position;
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(tmpDir), Time.deltaTime * 3.0f);
@@ -518,11 +523,6 @@ public class Creature : MonoBehaviour
 
         switch (CurrentState)
         {
-            //case State.Pause:
-            //    {
-            //        StartCoroutine(OnPause());
-            //        break;
-            //    }
             case State.Idle:
                 {
                     FindTarget();

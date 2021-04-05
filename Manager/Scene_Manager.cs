@@ -35,12 +35,6 @@ public class Scene_Manager : MonoBehaviour
 
     static public void SceneChange(int sceneNumber)
     {
-        string SceneName =
-                sceneNumber == 0 ? "Scene_Title" :
-                sceneNumber == 1 ? "Scene_Lobby" :
-                sceneNumber == 2 ? "Scene_StageSelect" :
-                sceneNumber == 3 ? "Scene_ShopMain" : "Scene_BattleStage";
-
-        SceneManager.LoadScene(SceneName);
+        //SceneManager.LoadScene(SceneName);
     }
 }
