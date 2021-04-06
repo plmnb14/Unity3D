@@ -33,12 +33,6 @@ public class BuffSkill : SkillData
         DeActivation();
     }
 
-    public BuffSkill DeepCopy()
-    {
-        BuffSkill copy = new BuffSkill();
-
-    }
-
     protected virtual void DeActivation()
     {
         Destroy(gameObject);

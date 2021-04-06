@@ -136,11 +136,8 @@ public class Creature : MonoBehaviour
 
     public void UpdateHP()
     {
-        if(healthChange == null)
-        {
-            HpUI.SetUpHealth(MyStatus.HitPoint);
-            healthChange += HpUI.ChangeHealth;
-        }
+        HpUI.SetUpHealth(MyStatus.HitPoint);
+        healthChange += HpUI.ChangeHealth;
 
         healthChange(MyStatus.HitPoint);
     }
